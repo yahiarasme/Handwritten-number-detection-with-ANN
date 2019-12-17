@@ -3,17 +3,29 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
+
+"""
+There are 60000 photos in the training, and 10000 photos for testing, each one with  28x28 pixel,
+with values from 0 to 255.  And there are 60000 labels for the training photos, and 10000 label for testing,
+with values  from 0 to 9 
+"""  
+# read traning data set 
 train_image = pd.read_csv('D:\project python\data set\csvTrainImages 60k x 784.csv')
 train_label = pd.read_csv('D:\project python\data set\csvTrainLabel 60k x 1.csv')
 
+# read testing data set
 test_image = pd.read_csv('D:\project python\data set\csvTestImages 10k x 784.csv')
 test_label = pd.read_csv('D:\project python\data set\csvTestLabel 10k x 1.csv')
 
-print(train_image)
-print(train_label)
+"""
+The data is between 0 and 255, we will wrap these value to be in 
+the range 0.01 to 1 by  multiplying each pixel by 0.99 / 255 and adding 0.01 to the result.
+This way, we avoid 0 values  as inputs, which are capable of preventing weight updates.
+We are ready now to turn our labelled images into one-hot representations.
+Instead of  zeros and one, we create 0.01 and 0.99, which will be better for our calculations 
+"""
 
 # normalization
-# بنضرب ف fact عشان خاطر نحول كل القيم بدل ما هما ف range من [0,255] يبقوا ف range من [0.01,1] عشان حاجتين عشان نقدر نتtrain بيها وعشان نلغي القيم الي ب 0 فنقدر اننا نعدل ال wight بسهولة
 fac = 0.99 / 255
 train_image = np.asfarray(train_image) * fac + 0.01
 test_image = np.asfarray(test_image) * fac + 0.01
@@ -21,7 +33,6 @@ train_label = np.asfarray(train_label)
 test_label = np.asfarray(test_label)
 
 # one hot encoding
-# بنعمل الحوار دة عشان نسهل ال ؛predectipon
 train_targets = np.array(train_label).astype(np.int)
 train_labels_one_hot = np.eye(np.max(train_targets) + 1)[train_targets]
 test_targets = np.array(test_label).astype(np.int)
@@ -34,6 +45,14 @@ test_labels_one_hot[test_labels_one_hot==1] = 0.99
 print(train_label[0])          # 1.0
 print(train_labels_one_hot[0])  # [0.01 0.99 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01]
 
+"""
+Build activation function :
+3.1 Sigmoid for the Hidden Layer 1 
+ 
+3.2 softmax for the Hidden Layer 2  It squish each input 𝑥𝑖 between 0 and 1 and normalizes the values to give
+a  proper probability distribution where the probabilities sum up to one 
+"""
+
 # build ANN 
 
 def sigmoid(x):
@@ -43,6 +62,7 @@ def softmax(x):
     return np.exp(x)/np.sum(np.exp(x), axis = 1, keepdims = True)
 
 
+# visualization
 def view_classify(img, ps):
     ps = np.squeeze(ps)
     fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols = 2)
@@ -57,7 +77,13 @@ def view_classify(img, ps):
     ax2.set_xlim(0, 1.1)
     plt.tight_layout()
 
-
+"""
+3.1 Input Layer  For the 28x28 photos we create a 784 node for each pixel    
+3.2 Hidden Layer 1  256 nodes    
+3.3 Hidden Layer 2  128 nodes    
+3.4 Output Layer  In Output there are 10 nodes, each for a number from 0 to 9  
+"""
+    
 class NeuralNetwork:
     def __init__(self):
         
@@ -71,6 +97,11 @@ class NeuralNetwork:
         
         self.w3 = np.random.randn(128, 10)
         self.b3 = np.zeros((1, 10))
+
+"""
+=> Forward Propagation is to take the inputs, multiply by the weights (random numbers) 
+=> Back propagation is to upgrade the weight, using a ​loss function​ represent the fail in  our training  
+"""
         
     def feedforward(self):        
         
@@ -103,6 +134,10 @@ class NeuralNetwork:
         self.w1 += self.lr * np.dot(self.x.T, a1_delta)
         self.b1 += self.lr * np.sum(a1_delta, axis=0, keepdims=True)
         
+"""
+One pass through the entire database is called ​epoch​, for each there is a training pass  calculate the loss,
+do backward pass and update weights and bias.
+"""
     def train(self, x, y):
         
         '''input_vector and target_vector can 
